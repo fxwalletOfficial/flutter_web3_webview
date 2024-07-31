@@ -29,6 +29,8 @@ class Web3Webview extends StatefulWidget {
   final void Function(InAppWebViewController controller, WebResourceRequest request, WebResourceError error)? onReceivedError;
   final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
   final void Function(InAppWebViewController controller, ConsoleMessage message)? onConsoleMessage;
+  final Future<bool> Function(InAppWebViewController controller, CreateWindowAction action)? onCreateWindow;
+  final Future<NavigationActionPolicy?> Function(InAppWebViewController, NavigationAction action)? shouldOverrideUrlLoading;
 
   final Future<List<String>> Function()? ethAccounts;
   final Future<int> Function()? ethChainId;
@@ -60,6 +62,8 @@ class Web3Webview extends StatefulWidget {
     this.onReceivedError,
     this.gestureRecognizers,
     this.onConsoleMessage,
+    this.onCreateWindow,
+    this.shouldOverrideUrlLoading,
 
     this.ethAccounts,
     this.ethChainId,
@@ -106,7 +110,9 @@ class Web3WebviewState extends State<Web3Webview> {
       onLoadStop: _onLoadStop,
       onReceivedError: widget.onReceivedError,
       gestureRecognizers: widget.gestureRecognizers,
-      onConsoleMessage: (c, m) => widget.onConsoleMessage
+      onConsoleMessage: widget.onConsoleMessage,
+      onCreateWindow: widget.onCreateWindow,
+      shouldOverrideUrlLoading: widget.shouldOverrideUrlLoading
     );
   }
 

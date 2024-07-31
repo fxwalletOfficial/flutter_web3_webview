@@ -5,7 +5,8 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 final InAppWebViewSettings DEFAULT_SETTINGS = InAppWebViewSettings(
   javaScriptCanOpenWindowsAutomatically: true,
   supportMultipleWindows: true,
-  allowsInlineMediaPlayback: true
+  allowsInlineMediaPlayback: true,
+  useShouldOverrideUrlLoading: true
 );
 
 Future<PermissionResponse?> DEFAULT_PERMISSION_REQUEST(InAppWebViewController controller, PermissionRequest request) async => PermissionResponse(
