@@ -31,7 +31,7 @@ class Page extends StatefulWidget {
 
 class PageState extends State<Page> {
   String _title = '';
-  final int _chainId = 1;
+  int _chainId = 1;
 
   String ethAddress = '0x0731fE5077B6aD30E8Cf9eeE3FC4b6D1410702Bb';
   String ethPrivateKey = '0x56d2380a81a9cdec89159b912cd19f681f51381aab2fd323a87085ab7aa884cc';
@@ -48,9 +48,11 @@ class PageState extends State<Page> {
             rdns: 'com.fxfi.fxwallet'
           )
         ),
+        shouldOverrideUrlLoading: (p0, action) async => NavigationActionPolicy.ALLOW,
         onTitleChanged: _onTitleChanged,
         ethAccounts: _ethAccounts,
         ethChainId: _ethChainId,
+        walletSwitchEthereumChain: _walletSwitchEthereumChain
       )
     );
   }
@@ -68,5 +70,10 @@ class PageState extends State<Page> {
 
   Future<List<String>> _ethAccounts() async {
     return [ethAddress];
+  }
+
+  Future<bool> _walletSwitchEthereumChain(JsAddEthereumChain data) async {
+    _chainId = int.parse((data.chainId)?.replaceFirst('0x', '') ?? '1', radix: 16);
+    return true;
   }
 }
