@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:flutter_web3_webview/src/models/js_add_eth_chain.dart';
 import 'package:flutter_web3_webview/src/models/js_transaction.dart';
 
+export 'package:flutter_web3_webview/src/models/js_add_eth_chain.dart';
+export 'package:flutter_web3_webview/src/models/js_transaction.dart';
+
 class JsCallBackData {
   final String method;
   final dynamic params;
