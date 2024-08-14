@@ -41,7 +41,7 @@ class PageState extends State<Page> {
     return Scaffold(
       appBar: AppBar(title: Text(_title)),
       body: Web3Webview(
-        initialUrlRequest: URLRequest(url: WebUri('https://swap.fxwallet.com')),
+        initialUrlRequest: URLRequest(url: WebUri('https://app.uniswap.org')),
         settings: Web3Settings(
           eth: Web3EthSettings(
             chainId: _chainId,

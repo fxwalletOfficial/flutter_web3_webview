@@ -4,11 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:uuid/uuid.dart';
 
 import 'package:flutter_web3_webview/src/config/params.dart';
 import 'package:flutter_web3_webview/src/models/js_callback_data.dart';
 import 'package:flutter_web3_webview/src/models/settings.dart';
+import 'package:flutter_web3_webview/src/utils/provider.dart';
 
 /// Webview to support wallet connect to web3 DApp. Use webview supported by Flutter_inappwebview.
 class Web3Webview extends StatefulWidget {
@@ -27,7 +27,7 @@ class Web3Webview extends StatefulWidget {
   final TextDirection? layoutDirection;
   final InAppWebViewInitialData? initialData;
   final String? initialFile;
-  final UnmodifiableListView<UserScript>? initialUserScripts;
+  final List<UserScript>? initialUserScripts;
   final ContextMenu? contextMenu;
   final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
   final FindInteractionController? findInteractionController;
@@ -197,17 +197,21 @@ class Web3Webview extends StatefulWidget {
 }
 
 class Web3WebviewState extends State<Web3Webview> {
-  /// EIP-6369 uuid.
-  String _uuid = '';
-  String get uuid {
-    if (_uuid.isEmpty) _uuid = const Uuid().v4();
-    return _uuid;
-  }
+  List<UserScript> _userScripts = [];
 
+  bool get isReady => !isWeb3 || _userScripts.isNotEmpty;
   bool get isWeb3 => widget.isWeb3;
 
   @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!isReady) return Container();
+
     return InAppWebView(
       windowId: widget.windowId,
       initialUrlRequest: widget.initialUrlRequest,
@@ -218,18 +222,18 @@ class Web3WebviewState extends State<Web3Webview> {
       layoutDirection: widget.layoutDirection,
       initialData: widget.initialData,
       initialFile: widget.initialFile,
-      initialUserScripts: widget.initialUserScripts,
+      initialUserScripts: UnmodifiableListView(_userScripts),
       contextMenu: widget.contextMenu,
       gestureRecognizers: widget.gestureRecognizers,
       findInteractionController: widget.findInteractionController,
       pullToRefreshController: widget.pullToRefreshController,
-      onWebViewCreated: widget.onWebViewCreated,
+      onWebViewCreated: _onWebViewCreated,
       onPermissionRequest: widget.onPermissionRequest ?? DEFAULT_PERMISSION_REQUEST,
       onProgressChanged: widget.onProgressChanged,
       onTitleChanged: widget.onTitleChanged,
       onUpdateVisitedHistory: widget.onUpdateVisitedHistory,
-      onLoadStart: _onLoadStart,
-      onLoadStop: _onLoadStop,
+      onLoadStart: widget.onLoadStart ,
+      onLoadStop: widget.onLoadStop,
       onReceivedError: widget.onReceivedError,
       onConsoleMessage: widget.onConsoleMessage,
       onCreateWindow: widget.onCreateWindow,
@@ -282,73 +286,97 @@ class Web3WebviewState extends State<Web3Webview> {
     );
   }
 
-  /// Inject provider.min.js when on load start.
-  void _onLoadStart(InAppWebViewController controller, WebUri? uri) {
-    _initWeb3(controller, false);
-    if (widget.onLoadStart != null) widget.onLoadStart!(controller, uri);
+  Future<void> _init() async {
+    final providers = Providers(settings: widget.settings);
+
+    _userScripts = [
+      UserScript(source: await providers.getAsset(), injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START),
+      UserScript(source: providers.getInitJs(), injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START)
+    ];
+    if (widget.initialUserScripts != null) _userScripts.addAll(widget.initialUserScripts!);
+
+    if (mounted) setState(() { });
   }
 
-  /// Inject provider.min.js when on load stop.
-  void _onLoadStop(InAppWebViewController controller, WebUri? uri) {
-    _initWeb3(controller, true);
-    if (widget.onLoadStop != null) widget.onLoadStop!(controller, uri);
-  }
-
-  /// Init web3 module.
-  Future<void> _initWeb3(InAppWebViewController controller, bool reInit) async {
-    if (!isWeb3) return;
-
-    await controller.injectJavascriptFileFromAsset(assetFilePath: 'packages/flutter_web3_webview/js/provider.min.js');
-    await controller.evaluateJavascript(source: _getInitJs(reInit));
+  void _onWebViewCreated(InAppWebViewController controller) {
+    if (widget.onWebViewCreated != null) widget.onWebViewCreated!(controller);
 
     if (controller.hasJavaScriptHandler(handlerName: 'FxWalletHandler')) return;
     controller.addJavaScriptHandler(handlerName: 'FxWalletHandler', callback: (args) => _onHandleCallback(args, controller));
   }
 
-  /// Get init js script.
-  String _getInitJs(bool reInit) {
-    return '''
-      (function() {
-        if ($reInit && window.ethereum != null) return;
+  // /// Inject provider.min.js when on load start.
+  // void _onLoadStart(InAppWebViewController controller, WebUri? uri) {
+  //   _initWeb3(controller, false);
+  //   if (widget.onLoadStart != null) widget.onLoadStart!(controller, uri);
+  // }
 
-        const config = {
-          ethereum: {
-            chainId: ${widget.settings?.eth?.chainId ?? 1},
-            isMetamask: false
-          },
-          solana: {
-            cluster: 'mainnet-beta',
-            icon: '${widget.settings?.sol?.icon ?? WALLET_ICON}',
-            name: '${widget.settings?.name ?? WALLET_NAME}'
-          },
-          isDebug: false
-        };
+  // /// Inject provider.min.js when on load stop.
+  // void _onLoadStop(InAppWebViewController controller, WebUri? uri) {
+  //   _initWeb3(controller, true);
+  //   if (widget.onLoadStop != null) widget.onLoadStop!(controller, uri);
+  // }
 
-        fxwallet.ethereum = new fxwallet.Provider(config);
-        fxwallet.solana = new window.fxwallet.SolanaProvider(config);
+  // /// Init web3 module.
+  // Future<void> _initWeb3(InAppWebViewController controller, bool reInit) async {
+  //   if (!isWeb3) return;
 
-        window.ethereum = fxwallet.ethereum;
+  //   final a = DateTime.now();
+  //   final data = await rootBundle.loadString('packages/flutter_web3_webview/js/provider.min.js');
+  //   final b = DateTime.now();
 
-        const event = new CustomEvent('eip6963:announceProvider', {
-          detail: {
-            info: {
-              uuid: '$uuid',
-              name: '${widget.settings?.name ?? WALLET_NAME}',
-              icon: '${widget.settings?.eth?.icon ?? ''}',
-              rdns: '${widget.settings?.eth?.rdns ?? ''}'
-            },
-            provider: fxwallet.ethereum
-          }
-        });
+  //   await controller.injectJavascriptFileFromAsset(assetFilePath: 'packages/flutter_web3_webview/js/provider.min.js');
+  //   await controller.evaluateJavascript(source: _getInitJs(reInit));
 
-        window.dispatchEvent(event);
-        window.addEventListener('eip6963:requestProvider', () => {
-          window.dispatchEvent(event);
-        });
+  //   if (controller.hasJavaScriptHandler(handlerName: 'FxWalletHandler')) return;
+  //   controller.addJavaScriptHandler(handlerName: 'FxWalletHandler', callback: (args) => _onHandleCallback(args, controller));
+  // }
 
-      })();
-    ''';
-  }
+  // /// Get init js script.
+  // String _getInitJs(bool reInit) {
+  //   return '''
+  //     (function() {
+  //       if ($reInit && window.ethereum != null) return;
+
+  //       const config = {
+  //         ethereum: {
+  //           chainId: ${widget.settings?.eth?.chainId ?? 1},
+  //           // isMetamask: true
+  //         },
+  //         solana: {
+  //           cluster: 'mainnet-beta',
+  //           icon: '${widget.settings?.sol?.icon ?? WALLET_ICON}',
+  //           name: '${widget.settings?.name ?? WALLET_NAME}'
+  //         },
+  //         isDebug: false
+  //       };
+
+  //       fxwallet.ethereum = new fxwallet.Provider(config);
+  //       fxwallet.solana = new window.fxwallet.SolanaProvider(config);
+  //       window.ethereum = fxwallet.ethereum;
+
+  //       const event = new CustomEvent('eip6963:announceProvider', {
+  //         detail: {
+  //           info: {
+  //             uuid: '$uuid',
+  //             name: '${widget.settings?.name ?? WALLET_NAME}',
+  //             icon: '${widget.settings?.eth?.icon ?? ''}',
+  //             rdns: '${widget.settings?.eth?.rdns ?? ''}'
+  //           },
+  //           provider: fxwallet.ethereum
+  //         }
+  //       });
+
+  //       console.log(3);
+  //       window.dispatchEvent(event);
+  //       window.addEventListener('eip6963:requestProvider', () => {
+  //         console.log(4);
+  //         window.dispatchEvent(event);
+  //       });
+
+  //     })();
+  //   ''';
+  // }
 
   /// Handle handler callback from DApp.
   Future<dynamic> _onHandleCallback(List args, InAppWebViewController controller) async {
