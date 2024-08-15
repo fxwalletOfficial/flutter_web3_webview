@@ -23,7 +23,8 @@ class JsCallBackData {
 
   JsTransactionObject getTxParams() {
     final json = params is List && params.isNotEmpty ? params.first : params;
-    return JsTransactionObject.fromJson(json is Map<String, dynamic> ? json : {});
+    return JsTransactionObject.fromJson(
+        json is Map<String, dynamic> ? json : {});
   }
 
   String getEthSignMsg() {
@@ -43,11 +44,12 @@ class JsCallBackData {
   String getSignTypedDataParams() {
     if (params is! List || params.length < 2) return '';
     final item = params[0] is String ? params[1] : params[0];
-    return item is String ? item :  json.encode(item);
+    return item is String ? item : json.encode(item);
   }
 
   JsAddEthereumChain getChainParams() {
     final json = params is List && params.isNotEmpty ? params.first : params;
-    return JsAddEthereumChain.fromJson(json is Map<String, dynamic> ? json : {});
+    return JsAddEthereumChain.fromJson(
+        json is Map<String, dynamic> ? json : {});
   }
 }

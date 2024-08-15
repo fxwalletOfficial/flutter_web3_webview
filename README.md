@@ -15,5 +15,9 @@ dependencies
 
 ### Use
 ```dart
+/// Init provider js asset before use.
+await Web3Webview.initJs();
+
+/// Use
 Web3Webview();
 ```

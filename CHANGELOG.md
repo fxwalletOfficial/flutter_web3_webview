@@ -5,3 +5,8 @@
 ## [0.1.1]
 
 * UPDATE: Inject provider at document start.
+
+## [0.1.2]
+
+* UPDATE: Init provider js before use.
+* UPDATE: Update README.md for use.

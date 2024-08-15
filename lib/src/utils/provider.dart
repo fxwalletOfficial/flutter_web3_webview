@@ -9,6 +9,20 @@ class Providers {
   final Web3Settings? settings;
   Providers({this.settings}) : uuid = const Uuid().v4();
 
+  static String _js = '';
+  static String get js => _js;
+
+  static Future<void> init() async {
+    if (_js.isNotEmpty) return;
+
+    try {
+      _js = await rootBundle
+          .loadString('packages/flutter_web3_webview/js/provider.min.js');
+    } catch (e) {
+      return;
+    }
+  }
+
   String getInitJs() {
     return '''
       (function() {
@@ -48,14 +62,5 @@ class Providers {
         });
       })();
     ''';
-  }
-
-  Future<String> getAsset() async {
-    try {
-      final asset = await rootBundle.loadString('packages/flutter_web3_webview/js/provider.min.js');
-      return asset;
-    } catch (e) {
-      return '';
-    }
   }
 }

@@ -3,11 +3,7 @@ class Web3Settings {
   final Web3EthSettings? eth;
   final Web3SolSettings? sol;
 
-  Web3Settings({
-    this.name,
-    this.eth,
-    this.sol
-  });
+  Web3Settings({this.name, this.eth, this.sol});
 }
 
 class Web3EthSettings {
@@ -20,17 +16,11 @@ class Web3EthSettings {
   /// Rdns display for EIP-6369.
   final String? rdns;
 
-  Web3EthSettings({
-    this.chainId,
-    this.icon,
-    this.rdns
-  });
+  Web3EthSettings({this.chainId, this.icon, this.rdns});
 }
 
 class Web3SolSettings {
   final String? icon;
 
-  Web3SolSettings({
-    this.icon
-  });
+  Web3SolSettings({this.icon});
 }

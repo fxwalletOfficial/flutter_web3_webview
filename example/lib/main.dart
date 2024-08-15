@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_webview/flutter_web3_webview.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Web3Webview.initJs();
+
   runApp(const MyApp());
 }
 
