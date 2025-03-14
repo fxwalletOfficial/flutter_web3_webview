@@ -10,3 +10,7 @@
 
 * UPDATE: Init provider js before use.
 * UPDATE: Update README.md for use.
+
+## [0.1.3]
+
+* FIX: Return full data for personal sign.

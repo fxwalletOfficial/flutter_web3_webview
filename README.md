@@ -9,7 +9,7 @@ Now support **EVM chain**, **Solana**.
 ```yaml
 dependencies
   ...
-  flutter_web3_webview: ^1.0.0
+  flutter_web3_webview: ^0.1.3
   ...
 ```
 

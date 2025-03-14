@@ -36,7 +36,7 @@ class JsCallBackData {
 
   String getPersonalSignMsg() {
     if (params is String) return params;
-    if (params is List && params.isNotEmpty) return params.first;
+    if (params is List) return json.encode(params);
 
     return '';
   }

@@ -1,7 +1,7 @@
 name: flutter_web3_webview
 description: Webview supported connected to web3 DApp in Flutter. Now support EVM chain & Solana, and will support more at future.
 homepage: https://github.com/fxwalletOfficial/flutter_web3_webview
-version: 0.1.2
+version: 0.1.3
 
 environment:
   sdk: '>=3.3.4 <4.0.0'
