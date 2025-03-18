@@ -14,3 +14,7 @@
 ## [0.1.3]
 
 * FIX: Return full data for personal sign.
+
+## 【0.1.4】
+
+* UPDATE: Add event queueing logic.
