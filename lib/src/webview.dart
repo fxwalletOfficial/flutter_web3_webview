@@ -388,42 +388,58 @@ class Web3WebviewState extends State<Web3Webview> {
       callback: (args) async {
         final item = JsCallBackData.fromData(args);
 
-        /// If the event is getting accounts or chain id, execute immediately.
+        // If the event is getting accounts or chain id, execute immediately.
         if (checkMethod(item.method)) return _onHandleCallback(item, controller)();
-        /// Else add it to event queue.
-        _addEvent(_onHandleCallback(item, controller));
 
-        final completer = _completers.last;
-        final result = await completer.future;
-        return result;
+        // Else add it to event queue.
+        try {
+          final results = await Future.wait([_addEvent(_onHandleCallback(item, controller)), getLastCompleter()], eagerError: true);
+          return results.last;
+        } catch (e) {
+          rethrow;
+        }
       }
     );
   }
 
+  /// Get the last completer.
+  Future<dynamic> getLastCompleter() async {
+    final completer = _completers.last;
+    final result = await completer.future;
+    return result;
+  }
+
   /// Event queueing method.
-  dynamic _addEvent(Function event) async {
+  Future<void> _addEvent(Function event) async {
     _eventQueue.insert(0, event);
     _completers.insert(0, Completer<dynamic>());
 
     if (_isProcessing) return;
     _isProcessing = true;
 
-    while (_eventQueue.isNotEmpty) {
-      final completer = _completers.last;
-      final result = await _eventQueue.last();
-      completer.complete(result);
-
-      _eventQueue.removeLast();
-      _completers.removeLast();
+    while (_eventQueue.isNotEmpty && _completers.isNotEmpty) {
+      try {
+        final completer = _completers.last;
+        final result = await _eventQueue.last();
+        completer.complete(result);
+      } catch (e) {
+        _isProcessing = false;
+        rethrow;
+      } finally {
+        _eventQueue.removeLast();
+        _completers.removeLast();
+      }
     }
+
     _isProcessing = false;
   }
 
   /// Handle handler callback from DApp.
   Function _onHandleCallback(JsCallBackData args, InAppWebViewController controller) {
-    switch (args.method) {
-      case 'eth_accounts':
-      case 'eth_requestAccounts':
+    try {
+      switch (args.method) {
+        case 'eth_accounts':
+        case 'eth_requestAccounts':
         return _ethAccounts;
 
       case 'eth_chainId':
@@ -458,6 +474,9 @@ class Web3WebviewState extends State<Web3Webview> {
 
       default:
         return () => _onDefaultCallback(args);
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 

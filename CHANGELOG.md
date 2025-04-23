@@ -18,3 +18,7 @@
 ## 【0.1.4】
 
 * UPDATE: Add event queueing logic.
+
+## 【0.1.5】
+
+* FIX: Optimized logic for error catching in events.
